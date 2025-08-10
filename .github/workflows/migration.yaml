@@ -79,40 +79,42 @@ jobs:
 
             - name: Create Build Success Summary
               if: success()
+              shell: powershell
               run: |
-                  echo "## ✅ Build Successful! 🎉" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 📊 Build Details:" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
-                  echo "- [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-                  echo "- [View Repository](${{ github.server_url }}/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## ✅ Build Successful! 🎉"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 📊 Build Details:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Repository**: ${{ github.repository }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Branch**: ${{ github.ref_name }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Commit**: ${{ github.sha }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Author**: ${{ github.actor }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Workflow**: ${{ github.workflow }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 🔗 Links:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [View Repository](${{ github.server_url }}/${{ github.repository }})"
 
             - name: Create Build Failure Summary
               if: failure()
+              shell: powershell
               run: |
-                  echo "## ❌ Build Failed! 🚨" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 📊 Failure Details:" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 🔧 Next Steps:" >> $GITHUB_STEP_SUMMARY
-                  echo "1. Check the workflow logs above for error details" >> $GITHUB_STEP_SUMMARY
-                  echo "2. Fix the identified issues" >> $GITHUB_STEP_SUMMARY
-                  echo "3. Push your changes to trigger a new build" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
-                  echo "- [View Failed Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-                  echo "- [View Repository](${{ github.server_url }}/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## ❌ Build Failed! 🚨"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 📊 Failure Details:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Repository**: ${{ github.repository }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Branch**: ${{ github.ref_name }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Commit**: ${{ github.sha }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Author**: ${{ github.actor }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Workflow**: ${{ github.workflow }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 🔧 Next Steps:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "1. Check the workflow logs above for error details"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "2. Fix the identified issues"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "3. Push your changes to trigger a new build"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 🔗 Links:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [View Failed Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [View Repository](${{ github.server_url }}/${{ github.repository }})"
 
 
     docker:
