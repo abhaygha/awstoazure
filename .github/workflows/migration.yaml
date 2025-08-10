@@ -181,7 +181,6 @@ jobs:
                 # No need for separate aws-iam-authenticator binary
                 Write-Host "AWS CLI is already configured and will handle EKS authentication"
                 Write-Host "AWS CLI version:"
-                aws --version
                 
                 # Verify AWS credentials
                 Write-Host "Verifying AWS credentials..."

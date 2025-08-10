@@ -1,14 +1,11 @@
 const AWS = require('aws-sdk');
-const { SFN } = require('aws-sdk');
-const { EventBridge } = require('aws-sdk');
-const { SQS } = require('aws-sdk');
 
 // Initialize AWS SDK
 AWS.config.update({ region: process.env.AWS_REGION || 'us-east-1' });
 
-const sfn = new SFN();
-const eventbridge = new EventBridge();
-const sqs = new SQS();
+const sfn = new AWS.SFN();
+const eventbridge = new AWS.EventBridge();
+const sqs = new AWS.SQS();
 
 // AI Brain - Core decision making and operation execution
 class AgenticAI {
