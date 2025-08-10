@@ -41,13 +41,16 @@ else
     echo -e "      ${GRAY}Install from: https://www.terraform.io/downloads${NC}"
 fi
 
-# Check Node.js
-if command -v node &> /dev/null; then
-    NODE_VERSION=$(node --version 2>/dev/null)
-    echo -e "   ${GREEN}✅ Node.js: $NODE_VERSION${NC}"
+# Check Python
+if command -v python3 &> /dev/null; then
+    PYTHON_VERSION=$(python3 --version 2>/dev/null)
+    echo -e "   ${GREEN}✅ Python: $PYTHON_VERSION${NC}"
+elif command -v python &> /dev/null; then
+    PYTHON_VERSION=$(python --version 2>/dev/null)
+    echo -e "   ${GREEN}✅ Python: $PYTHON_VERSION${NC}"
 else
-    echo -e "   ${RED}❌ Node.js: Not found${NC}"
-    echo -e "      ${GRAY}Install from: https://nodejs.org/${NC}"
+    echo -e "   ${RED}❌ Python: Not found${NC}"
+    echo -e "      ${GRAY}Install from: https://python.org/downloads/${NC}"
 fi
 
 echo ""
@@ -56,8 +59,8 @@ echo ""
 echo -e "${YELLOW}📁 Checking Project Structure...${NC}"
 
 required_files=(
-    "agent/index.js"
-    "agent/package.json"
+    "agent-python/lambda_function.py"
+    "agent-python/requirements.txt"
     "infrastructure/main.tf"
     "infrastructure/variables.tf"
     "infrastructure/outputs.tf"
@@ -80,16 +83,16 @@ echo ""
 # Check agent build
 echo -e "${YELLOW}🔨 Checking Agent Build...${NC}"
 
-if [ -f "agent/dist/agent.zip" ]; then
-    echo -e "   ${GREEN}✅ Lambda package: agent/dist/agent.zip${NC}"
-    file_size=$(stat -c%s "agent/dist/agent.zip" 2>/dev/null || stat -f%z "agent/dist/agent.zip" 2>/dev/null || echo "unknown")
+if [ -f "agent-python/agent.zip" ]; then
+    echo -e "   ${GREEN}✅ Lambda package: agent-python/agent.zip${NC}"
+    file_size=$(stat -c%s "agent-python/agent.zip" 2>/dev/null || stat -f%z "agent-python/agent.zip" 2>/dev/null || echo "unknown")
     if [ "$file_size" != "unknown" ]; then
         size_kb=$((file_size / 1024))
         echo -e "      ${GRAY}Size: ${size_kb} KB${NC}"
     fi
 else
     echo -e "   ${YELLOW}⚠️  Lambda package: Not built yet${NC}"
-    echo -e "      ${GRAY}Run: cd agent && npm run build${NC}"
+    echo -e "      ${GRAY}Run: cd agent-python && python deploy.py${NC}"
 fi
 
 echo ""
@@ -123,10 +126,10 @@ passed_checks=0
 # Count checks
 if command -v aws &> /dev/null; then ((passed_checks++)); fi
 if command -v terraform &> /dev/null; then ((passed_checks++)); fi
-if command -v node &> /dev/null; then ((passed_checks++)); fi
-if [ -f "agent/dist/agent.zip" ]; then ((passed_checks++)); fi
+if command -v python3 &> /dev/null || command -v python &> /dev/null; then ((passed_checks++)); fi
+if [ -f "agent-python/agent.zip" ]; then ((passed_checks++)); fi
 if [ -f "infrastructure/main.tf" ]; then ((passed_checks++)); fi
-if [ -f "agent/index.js" ]; then ((passed_checks++)); fi
+if [ -f "agent-python/lambda_function.py" ]; then ((passed_checks++)); fi
 if [ -f "deploy.ps1" ]; then ((passed_checks++)); fi
 if [ -f "deploy.sh" ]; then ((passed_checks++)); fi
 

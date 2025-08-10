@@ -42,22 +42,18 @@ try {
     exit 1
 }
 
-# Check if Node.js is installed
+# Check if Python is installed
 try {
-    $null = Get-Command node -ErrorAction Stop
-    Write-ColorOutput "✅ Node.js is installed" "Green"
+    $null = Get-Command python3 -ErrorAction Stop
+    Write-ColorOutput "✅ Python3 is installed" "Green"
 } catch {
-    Write-ColorOutput "❌ Node.js is not installed. Please install it first." "Red"
-    exit 1
-}
-
-# Check if npm is installed
-try {
-    $null = Get-Command npm -ErrorAction Stop
-    Write-ColorOutput "✅ npm is installed" "Green"
-} catch {
-    Write-ColorOutput "❌ npm is not installed. Please install it first." "Red"
-    exit 1
+    try {
+        $null = Get-Command python -ErrorAction Stop
+        Write-ColorOutput "✅ Python is installed" "Green"
+    } catch {
+        Write-ColorOutput "❌ Python is not installed. Please install it first." "Red"
+        exit 1
+    }
 }
 
 Write-ColorOutput "✅ All prerequisites are met!" "Green"
@@ -75,9 +71,12 @@ try {
 
 # Build the Lambda function
 Write-ColorOutput "🔨 Building Lambda function..." "Yellow"
-Set-Location agent
-npm install
-npm run build
+Set-Location agent-python
+try {
+    python3 deploy.py
+} catch {
+    python deploy.py
+}
 Set-Location ..
 
 # Initialize Terraform
@@ -113,7 +112,7 @@ if ($response -match "^[yY][eE]?[sS]?$") {
     Write-ColorOutput "📦 Updating Lambda function code..." "Yellow"
     aws lambda update-function-code `
         --function-name "$ProjectName-agentic-ai-agent" `
-        --zip-file fileb://agent/dist/agent.zip `
+        --zip-file fileb://agent-python/agent.zip `
         --region "$AwsRegion"
     
     Write-ColorOutput "✅ Lambda function code updated!" "Green"

@@ -26,11 +26,11 @@ provider "aws" {
 
 # 🧠 Core AI Agent Lambda Function
 resource "aws_lambda_function" "agentic_ai_agent" {
-  filename         = "../agent/dist/agent.zip"
+  filename         = "../agent-python/agent.zip"
   function_name    = "${var.project_name}-agentic-ai-agent"
   role            = aws_iam_role.lambda_execution_role.arn
-  handler         = "index.handler"
-  runtime         = "nodejs18.x"
+  handler         = "lambda_function.lambda_handler"
+  runtime         = "python3.11"
   timeout         = 300
   memory_size     = 512
 

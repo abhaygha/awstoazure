@@ -34,15 +34,9 @@ if ! command -v terraform &> /dev/null; then
     exit 1
 fi
 
-# Check if Node.js is installed
-if ! command -v node &> /dev/null; then
-    echo -e "${RED}❌ Node.js is not installed. Please install it first.${NC}"
-    exit 1
-fi
-
-# Check if npm is installed
-if ! command -v npm &> /dev/null; then
-    echo -e "${RED}❌ npm is not installed. Please install it first.${NC}"
+# Check if Python is installed
+if ! command -v python3 &> /dev/null && ! command -v python &> /dev/null; then
+    echo -e "${RED}❌ Python is not installed. Please install it first.${NC}"
     exit 1
 fi
 
@@ -60,9 +54,8 @@ echo -e "${GREEN}✅ AWS credentials verified. Account ID: ${AWS_ACCOUNT_ID}${NC
 
 # Build the Lambda function
 echo -e "${YELLOW}🔨 Building Lambda function...${NC}"
-cd agent
-npm install
-npm run build
+cd agent-python
+python3 deploy.py 2>/dev/null || python deploy.py
 cd ..
 
 # Initialize Terraform
@@ -98,7 +91,7 @@ if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     echo -e "${YELLOW}📦 Updating Lambda function code...${NC}"
     aws lambda update-function-code \
         --function-name "${PROJECT_NAME}-agentic-ai-agent" \
-        --zip-file fileb://agent/dist/agent.zip \
+        --zip-file fileb://agent-python/agent.zip \
         --region "${AWS_REGION}"
     
     echo -e "${GREEN}✅ Lambda function code updated!${NC}"

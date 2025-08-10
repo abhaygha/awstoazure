@@ -21,7 +21,7 @@ This will identify exactly what's wrong with your setup.
 #### **Missing Build Files**
 - **Error**: `Lambda package: Not built yet`
 - **Cause**: The agent hasn't been built
-- **Solution**: Run `cd agent && npm run build`
+- **Solution**: Run `cd agent-python && python deploy.py`
 
 #### **Permission Issues**
 - **Error**: `Access denied` or `Permission denied`
@@ -35,13 +35,13 @@ This will identify exactly what's wrong with your setup.
 # Check if tools are installed
 aws --version
 terraform --version
-node --version
+python3 --version 2>/dev/null || python --version
 ```
 
 #### **Step 2: Fix Missing Tools**
 - **AWS CLI**: Download from https://aws.amazon.com/cli/
 - **Terraform**: Download from https://www.terraform.io/downloads
-- **Node.js**: Download from https://nodejs.org/
+- **Python**: Download from https://python.org/downloads/
 
 #### **Step 3: Configure AWS**
 ```powershell
@@ -54,9 +54,9 @@ aws configure
 
 #### **Step 4: Build the Agent**
 ```powershell
-cd agent
-npm install
-npm run build
+cd agent-python
+pip install -r requirements.txt
+python deploy.py
 cd ..
 ```
 
@@ -90,13 +90,13 @@ cd ..
 #### **Reset Everything:**
 ```powershell
 # Clean build artifacts
-Remove-Item -Recurse -Force agent/dist -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force agent/node_modules -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force agent-python/agent.zip -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force agent-python/__pycache__ -ErrorAction SilentlyContinue
 
 # Rebuild
-cd agent
-npm install
-npm run build
+cd agent-python
+pip install -r requirements.txt
+python deploy.py
 cd ..
 
 # Reinitialize Terraform
@@ -113,11 +113,11 @@ aws sts get-caller-identity
 # Test Terraform
 terraform version
 
-# Test Node.js
-node --version
+# Test Python
+python3 --version 2>/dev/null || python --version
 
 # Test build
-cd agent && npm run build && cd ..
+cd agent-python && python deploy.py && cd ..
 ```
 
 ### 6. 📞 **When to Get Help**
@@ -139,7 +139,7 @@ cd agent && npm run build && cd ..
 #### **You're Ready When:**
 - ✅ All 8 validation checks pass
 - ✅ AWS credentials are configured
-- ✅ Lambda package is built (`agent/dist/agent.zip` exists)
+- ✅ Lambda package is built (`agent-python/agent.zip` exists)
 - ✅ Terraform can initialize
 - ✅ No red error messages
 

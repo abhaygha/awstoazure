@@ -39,17 +39,22 @@ try {
     Write-Host "   ❌ Terraform: Not found" -ForegroundColor Red
 }
 
-# Check Node.js
+# Check Python
 try {
-    $nodeVersion = node --version 2>$null
-    if ($nodeVersion) {
-        Write-Host "   ✅ Node.js: $nodeVersion" -ForegroundColor Green
+    $pythonVersion = python3 --version 2>$null
+    if ($pythonVersion) {
+        Write-Host "   ✅ Python: $pythonVersion" -ForegroundColor Green
     } else {
-        Write-Host "   ❌ Node.js: Not found" -ForegroundColor Red
-        Write-Host "      Install from: https://nodejs.org/" -ForegroundColor Gray
+        $pythonVersion = python --version 2>$null
+        if ($pythonVersion) {
+            Write-Host "   ✅ Python: $pythonVersion" -ForegroundColor Green
+        } else {
+            Write-Host "   ❌ Python: Not found" -ForegroundColor Red
+            Write-Host "      Install from: https://python.org/downloads/" -ForegroundColor Gray
+        }
     }
 } catch {
-    Write-Host "   ❌ Node.js: Not found" -ForegroundColor Red
+    Write-Host "   ❌ Python: Not found" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -58,8 +63,8 @@ Write-Host ""
 Write-Host "📁 Checking Project Structure..." -ForegroundColor Yellow
 
 $requiredFiles = @(
-    "agent/index.js",
-    "agent/package.json",
+    "agent-python/lambda_function.py",
+    "agent-python/requirements.txt",
     "infrastructure/main.tf",
     "infrastructure/variables.tf",
     "infrastructure/outputs.tf",
@@ -82,13 +87,13 @@ Write-Host ""
 # Check agent build
 Write-Host "🔨 Checking Agent Build..." -ForegroundColor Yellow
 
-if (Test-Path "agent/dist/agent.zip") {
-    Write-Host "   ✅ Lambda package: agent/dist/agent.zip" -ForegroundColor Green
-    $fileSize = (Get-Item "agent/dist/agent.zip").Length
+if (Test-Path "agent-python/agent.zip") {
+    Write-Host "   ✅ Lambda package: agent-python/agent.zip" -ForegroundColor Green
+    $fileSize = (Get-Item "agent-python/agent.zip").Length
     Write-Host "      Size: $([math]::Round($fileSize/1KB, 2)) KB" -ForegroundColor Gray
 } else {
     Write-Host "   ⚠️  Lambda package: Not built yet" -ForegroundColor Yellow
-    Write-Host "      Run: cd agent && npm run build" -ForegroundColor Gray
+    Write-Host "      Run: cd agent-python && python deploy.py" -ForegroundColor Gray
 }
 
 Write-Host ""
@@ -125,10 +130,10 @@ $passedChecks = 0
 
 if (Get-Command aws -ErrorAction SilentlyContinue) { $passedChecks++ }
 if (Get-Command terraform -ErrorAction SilentlyContinue) { $passedChecks++ }
-if (Get-Command node -ErrorAction SilentlyContinue) { $passedChecks++ }
-if (Test-Path "agent/dist/agent.zip") { $passedChecks++ }
+if ((Get-Command python3 -ErrorAction SilentlyContinue) -or (Get-Command python -ErrorAction SilentlyContinue)) { $passedChecks++ }
+if (Test-Path "agent-python/agent.zip") { $passedChecks++ }
 if (Test-Path "infrastructure/main.tf") { $passedChecks++ }
-if (Test-Path "agent/index.js") { $passedChecks++ }
+if (Test-Path "agent-python/lambda_function.py") { $passedChecks++ }
 if (Test-Path "deploy.ps1") { $passedChecks++ }
 if (Test-Path "deploy.sh") { $passedChecks++ }
 

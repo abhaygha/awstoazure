@@ -41,6 +41,33 @@ AI: *notifies you only if human intervention required*
 ## 🏗️ **Architecture Components:**
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Your Prompt   │───▶│  AWS Lambda     │───▶│  AWS Services   │
 │                 │    │  (AI Brain)     │    │  (Execution)    │
@@ -59,6 +86,14 @@ AI: *notifies you only if human intervention required*
                        └─────────────────┘
 ```
 
+
+
+
+
+
+
+
+
 ## 🛠️ **Setup Instructions:**
 
 ### **1. Deploy Infrastructure:**
@@ -71,9 +106,9 @@ terraform apply
 
 ### **2. Configure AI Agent:**
 ```bash
-cd agentic-ai/agent
-npm install
-npm run deploy
+cd agentic-ai/agent-python
+pip install -r requirements.txt
+python deploy.py
 ```
 
 ### **3. Test the Agent:**

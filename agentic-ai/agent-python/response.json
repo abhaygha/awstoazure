@@ -1,0 +1,1 @@
+{"statusCode": 200, "body": {"message": "Operation completed successfully", "operation": "create bucket", "result": {"bucketName": "agentic-ai-bucket-1754839897-1qwikt", "region": "us-east-1", "arn": "arn:aws:s3:::agentic-ai-bucket-1754839897-1qwikt", "message": "S3 bucket \"agentic-ai-bucket-1754839897-1qwikt\" created successfully in us-east-1"}, "requestId": "req-456"}}
