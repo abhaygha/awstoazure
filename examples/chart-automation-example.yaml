@@ -1,0 +1,20 @@
+# Example: Automatically updating Chart.yaml appVersion
+- name: Update Chart appVersion (Optional)
+  shell: powershell
+  run: |
+    # Update appVersion to match image tag
+    $chartPath = "helm/awstoazure/Chart.yaml"
+    $chartContent = Get-Content $chartPath -Raw
+    $imageTag = "${{ needs.docker.outputs.image-tag }}"
+    
+    # Update appVersion line
+    $chartContent = $chartContent -replace 'appVersion:.*', "appVersion: `"$imageTag`""
+    Set-Content -Path $chartPath -Value $chartContent
+    
+    # Or update chart version (semantic versioning)
+    $currentVersion = (Select-String "version:" $chartPath).ToString().Split(":")[1].Trim()
+    $newPatch = [int]$currentVersion.Split(".")[2] + 1
+    $newVersion = "$($currentVersion.Split(".")[0]).$($currentVersion.Split(".")[1]).$newPatch"
+    $chartContent = $chartContent -replace 'version:.*', "version: $newVersion"
+    Set-Content -Path $chartPath -Value $chartContent
+

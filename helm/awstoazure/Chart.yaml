@@ -1,0 +1,21 @@
+apiVersion: v2
+name: awstoazure
+description: AWS to Azure Migration Application - Spring Boot App
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - spring-boot
+  - java
+  - migration
+  - aws
+  - azure
+home: https://github.com/abhaygha/awstoazure
+sources:
+  - https://github.com/abhaygha/awstoazure
+maintainers:
+  - name: abhaygha
+    email: abhaygha@example.com
+dependencies: []
+annotations:
+  category: Application

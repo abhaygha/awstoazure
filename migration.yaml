@@ -1,0 +1,38 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - main
+            - master
+
+    pull_request:
+        branches:
+            - main
+            - master
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: checkout code
+              uses: actions/checkout@v2
+
+            - name: Setup Java
+              uses: actions/setup-java@v2
+              with:
+                  java-version: '11'
+                  java-package: 'jdk'
+                  
+
+            - name: Install Dependencies
+              run: mvn install
+              env:
+                  MAVEN_OPTS: '-Xmx1024m'
+                  JAVA_TOOL_OPTIONS: '-Xmx1024m'
+            
+            - name: Run Tests
+              run: mvn test
+              env:
+                  MAVEN_OPTS: '-Xmx1024m'
+                  JAVA_TOOL_OPTIONS: '-Xmx1024m'

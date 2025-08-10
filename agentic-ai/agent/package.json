@@ -1,0 +1,29 @@
+{
+  "name": "agentic-ai-agent",
+  "version": "1.0.0",
+  "description": "Agentic AI for autonomous AWS operations",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "npm install --production && zip -r dist/agent.zip . -x '*.test.js' 'test/*' 'node_modules/.bin/*'",
+    "deploy": "npm run build && aws lambda update-function-code --function-name agentic-ai-agent --zip-file fileb://dist/agent.zip"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1531.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ai",
+    "aws",
+    "lambda",
+    "automation",
+    "infrastructure"
+  ],
+  "author": "Agentic AI",
+  "license": "MIT"
+}

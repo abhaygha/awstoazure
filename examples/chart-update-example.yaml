@@ -1,0 +1,28 @@
+# Example: Automatically updating Helm CHARTS (not just values)
+- name: Update Helm Chart Templates (Example)
+  shell: powershell
+  run: |
+    # Example: Add new environment variable to deployment template
+    $deploymentPath = "helm/awstoazure/templates/deployment.yaml"
+    $deploymentContent = Get-Content $deploymentPath -Raw
+    
+    # Add new env var if not exists
+    if (-not ($deploymentContent -match "NEW_FEATURE_FLAG")) {
+      $envSection = @"
+          env:
+            - name: NEW_FEATURE_FLAG
+              value: "{{ .Values.app.newFeatureFlag | default false }}"
+"@
+      # Insert after ports section
+      $deploymentContent = $deploymentContent -replace '(ports:.*?protocol: TCP)', "`$1`n$envSection"
+      Set-Content -Path $deploymentPath -Value $deploymentContent
+    }
+    
+    # Update values.yaml to include the new value
+    $valuesPath = "helm/awstoazure/values.yaml"
+    $valuesContent = Get-Content $valuesPath -Raw
+    if (-not ($valuesContent -match "newFeatureFlag")) {
+      $valuesContent += "`n`napp:`n  newFeatureFlag: false"
+      Set-Content -Path $valuesPath -Value $valuesContent
+    }
+

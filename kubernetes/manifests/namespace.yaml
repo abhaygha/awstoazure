@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: awstoazure-dev
+  labels:
+    name: awstoazure-dev
+    environment: development
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: awstoazure-staging
+  labels:
+    name: awstoazure-staging
+    environment: staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: awstoazure-prod
+  labels:
+    name: awstoazure-prod
+    environment: production

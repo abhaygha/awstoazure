@@ -1,0 +1,472 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - master
+            - main
+            - develop
+    pull_request:
+        branches:
+            - main
+    workflow_dispatch:
+        inputs:
+            teardown_cluster:
+                description: 'Teardown Kubernetes cluster (⚠️ DANGEROUS - Deletes everything!)'
+                required: false
+                type: boolean
+                default: false
+
+jobs:
+    build:
+        runs-on: self-hosted
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Set up JDK 17
+              uses: actions/setup-java@v1
+              with:
+                  java-version: '17'
+
+            - name: Setup Maven
+              uses: stCarolas/setup-maven@v5
+              with:
+                  maven-version: '3.8.2'
+
+                  
+
+            - name: Build with Maven
+              run: mvn install
+
+            - name: Run tests and generate coverage report
+              run: mvn clean verify
+
+            # Temporarily disabled until SonarCloud Automatic Analysis is turned off
+            # - name: Analyze with SonarCloud
+            #   env:
+            #       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            #   run: mvn clean compile sonar:sonar -Dsonar.qualitygate.wait=true
+
+            # - name: Check Quality Gate Status
+            #   id: check_quality_gate
+            #   run: |
+            #       quality_gate_status=$(curl -s -H "Authorization: token ${{ secrets.SONAR_TOKEN }}" \
+            #         -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=abhaygha_awstoazure" | \
+            #         jq -r '.projectStatus.status')
+            #       echo "Quality Gate Status: $quality_gate_status"
+            #       
+            #       echo "Debug Info: Quality Gate Status=$quality_gate_status"
+            #       
+            #       if [ "$quality_gate_status" != "OK" ]; then
+            #         echo "Quality Gate failed!"
+            #         exit 1
+            #       fi
+            #       
+            #       echo "Quality Gate passed! (Coverage checks disabled)"
+            #   env:
+            #       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+            - name: Install Awscli
+              run: pip install awscli
+
+            - name: Setup AwScli
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Create Build Success Summary
+              if: success()
+              run: |
+                  echo "## ✅ Build Successful! 🎉" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 📊 Build Details:" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
+                  echo "- [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+                  echo "- [View Repository](${{ github.server_url }}/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+
+            - name: Create Build Failure Summary
+              if: failure()
+              run: |
+                  echo "## ❌ Build Failed! 🚨" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 📊 Failure Details:" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 🔧 Next Steps:" >> $GITHUB_STEP_SUMMARY
+                  echo "1. Check the workflow logs above for error details" >> $GITHUB_STEP_SUMMARY
+                  echo "2. Fix the identified issues" >> $GITHUB_STEP_SUMMARY
+                  echo "3. Push your changes to trigger a new build" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
+                  echo "- [View Failed Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+                  echo "- [View Repository](${{ github.server_url }}/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+
+
+    docker:
+        runs-on: self-hosted
+        needs: [build]
+        outputs:
+            image-tag: ${{ steps.image.outputs.tag }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Login To ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Build, tag, and push image to Amazon ECR
+              id: image
+              shell: powershell
+              run: |
+                $IMAGE_TAG = "${{ github.sha }}".Substring(0,8)
+                docker build -t myapp .
+                docker tag myapp:latest 891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo:latest
+                docker tag myapp:latest "891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo:$IMAGE_TAG"
+                docker push 891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo:latest
+                docker push "891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo:$IMAGE_TAG"
+                echo "tag=$IMAGE_TAG" >> $env:GITHUB_OUTPUT
+
+    setup-infrastructure:
+        runs-on: self-hosted
+        needs: [docker]
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Install eksctl
+              shell: powershell
+              run: |
+                  # Download and install eksctl for Windows
+                  $eksctlUrl = "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Windows_amd64.zip"
+                  Invoke-WebRequest -Uri $eksctlUrl -OutFile "eksctl.zip"
+                  Expand-Archive -Path "eksctl.zip" -DestinationPath "."
+                  Move-Item "eksctl.exe" "$env:GITHUB_WORKSPACE\eksctl.exe"
+                  & "$env:GITHUB_WORKSPACE\eksctl.exe" version
+
+            - name: Install kubectl
+              shell: powershell
+              run: |
+                # Download and install kubectl for Windows
+                $stableVersion = (Invoke-WebRequest -Uri "https://dl.k8s.io/release/stable.txt").Content.Trim()
+                $kubectlUrl = "https://dl.k8s.io/release/$stableVersion/bin/windows/amd64/kubectl.exe"
+                Invoke-WebRequest -Uri $kubectlUrl -OutFile "kubectl.exe"
+                Move-Item "kubectl.exe" "$env:GITHUB_WORKSPACE\kubectl.exe"
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" version --client
+
+            - name: Configure AWS CLI for kubectl authentication
+              shell: powershell
+              run: |
+                # Modern EKS clusters can use AWS CLI directly for authentication
+                # No need for separate aws-iam-authenticator binary
+                Write-Host "AWS CLI is already configured and will handle EKS authentication"
+                Write-Host "AWS CLI version:"
+                aws --version
+                
+                # Verify AWS credentials
+                Write-Host "Verifying AWS credentials..."
+                aws sts get-caller-identity
+
+            - name: Install Helm
+              shell: powershell
+              run: |
+                # Download and install Helm for Windows
+                $helmUrl = "https://get.helm.sh/helm-v3.12.0-windows-amd64.zip"
+                Invoke-WebRequest -Uri $helmUrl -OutFile "helm.zip"
+                Expand-Archive -Path "helm.zip" -DestinationPath "."
+                Move-Item "windows-amd64\helm.exe" "$env:GITHUB_WORKSPACE\helm.exe"
+                & "$env:GITHUB_WORKSPACE\helm.exe" version
+
+            - name: Check if cluster exists
+              id: cluster-check
+              shell: powershell
+              run: |
+                  try {
+                    aws eks describe-cluster --name awstoazure-cluster --region us-east-1 2>$null
+                    Write-Host "Cluster already exists"
+                    echo "created=false" >> $env:GITHUB_OUTPUT
+                  } catch {
+                    Write-Host "Cluster does not exist, will create"
+                    echo "created=true" >> $env:GITHUB_OUTPUT
+                  }
+
+            - name: Create EKS Cluster
+              if: steps.cluster-check.outputs.created == 'true'
+              shell: powershell
+              run: |
+                  Write-Host "Creating EKS cluster..."
+                  
+                  # Use eksctl directly instead of script for Windows compatibility
+                  & "$env:GITHUB_WORKSPACE\eksctl.exe" create cluster `
+                    --name awstoazure-cluster `
+                    --region us-east-1 `
+                    --version 1.28 `
+                    --nodegroup-name awstoazure-nodes `
+                    --node-type t3.medium `
+                    --nodes 2 `
+                    --nodes-min 1 `
+                    --nodes-max 4 `
+                    --managed `
+                    --with-oidc `
+                    --ssh-access=false `
+                    --full-ecr-access
+
+            - name: Configure kubectl (existing cluster)
+              if: steps.cluster-check.outputs.created == 'false'
+              shell: powershell
+              run: |
+                  Write-Host "Configuring kubectl for existing cluster..."
+                  aws eks update-kubeconfig --region us-east-1 --name awstoazure-cluster
+                  & "$env:GITHUB_WORKSPACE\kubectl.exe" cluster-info
+
+            - name: Setup ECR secrets (if cluster already exists)
+              if: steps.cluster-check.outputs.created == 'false'
+              shell: powershell
+              run: |
+                  Write-Host "Updating ECR secrets..."
+                  $ECR_PASSWORD = aws ecr get-login-password --region us-east-1
+                  $ECR_REGISTRY = "891377120087.dkr.ecr.us-east-1.amazonaws.com"
+                  
+                  $namespaces = @("awstoazure-dev", "awstoazure-staging", "awstoazure-prod")
+                  foreach ($namespace in $namespaces) {
+                    & "$env:GITHUB_WORKSPACE\kubectl.exe" create secret docker-registry ecr-registry-secret `
+                      --docker-server=$ECR_REGISTRY `
+                      --docker-username=AWS `
+                      --docker-password=$ECR_PASSWORD `
+                      --namespace=$namespace `
+                      --dry-run=client -o yaml | & "$env:GITHUB_WORKSPACE\kubectl.exe" apply -f -
+                  }
+
+            - name: Verify cluster setup
+              shell: powershell
+              run: |
+                Write-Host "Verifying cluster setup..."
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" get nodes
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" get namespaces
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" get pods --all-namespaces
+
+            - name: Install ArgoCD
+              shell: powershell
+              run: |
+                Write-Host "Installing ArgoCD..."
+                
+                # Create argocd namespace
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" create namespace argocd --dry-run=client -o yaml | & "$env:GITHUB_WORKSPACE\kubectl.exe" apply -f -
+                
+                # Install ArgoCD
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+                
+                # Wait for ArgoCD to be ready
+                Write-Host "Waiting for ArgoCD to be ready..."
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" wait --for=condition=available --timeout=600s deployment/argocd-server -n argocd
+                
+                # Get ArgoCD admin password
+                Write-Host "Getting ArgoCD admin password..."
+                $adminSecret = & "$env:GITHUB_WORKSPACE\kubectl.exe" -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
+                $adminPassword = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($adminSecret))
+                Write-Host "ArgoCD admin password: $adminPassword"
+                
+                # Expose ArgoCD server via LoadBalancer
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+                
+                Write-Host "ArgoCD installation completed!"
+
+            - name: Configure ArgoCD Application
+              shell: powershell
+              run: |
+                Write-Host "Configuring ArgoCD application..."
+                
+                # Apply the pre-created ArgoCD application files
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" apply -f argocd/application-dev.yaml
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" apply -f argocd/application-prod.yaml
+                
+                Write-Host "ArgoCD applications configured!"
+
+            - name: Update Helm Values with New Image Tag
+              shell: powershell
+              run: |
+                Write-Host "Updating Helm values with new image tag..."
+                $imageTag = "${{ needs.docker.outputs.image-tag }}"
+                Write-Host "New image tag: $imageTag"
+                
+                # Update values-dev.yaml with new image tag
+                $valuesDevPath = "helm/awstoazure/values-dev.yaml"
+                $valuesDevContent = Get-Content $valuesDevPath -Raw
+                $valuesDevContent = $valuesDevContent -replace 'tag:.*', "tag: `"$imageTag`""
+                Set-Content -Path $valuesDevPath -Value $valuesDevContent
+                
+                # Update values-prod.yaml with new image tag (for main branch)
+                if ("${{ github.ref }}" -eq "refs/heads/main") {
+                  $valuesProdPath = "helm/awstoazure/values-prod.yaml"
+                  $valuesProdContent = Get-Content $valuesProdPath -Raw
+                  $valuesProdContent = $valuesProdContent -replace 'tag:.*', "tag: `"$imageTag`""
+                  Set-Content -Path $valuesProdPath -Value $valuesProdContent
+                }
+                
+                # Commit and push the updated values
+                git config --global user.name "github-actions[bot]"
+                git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                git add helm/awstoazure/values-*.yaml
+                git commit -m "chore: update image tag to $imageTag [skip ci]"
+                git push
+                
+                Write-Host "Helm values updated and committed!"
+
+    deploy:
+        needs: [build, docker, setup-infrastructure]
+        runs-on: self-hosted
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Configure kubectl for EKS
+              shell: powershell
+              run: |
+                # Configure kubectl for EKS cluster
+                aws eks update-kubeconfig --region us-east-1 --name awstoazure-cluster
+                
+                # Verify connection
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" cluster-info
+                & "$env:GITHUB_WORKSPACE\kubectl.exe" get nodes
+
+            - name: Deploy with Helm (Development)
+              if: github.ref == 'refs/heads/develop'
+              shell: powershell
+              run: |
+                & "$env:GITHUB_WORKSPACE\helm.exe" upgrade --install awstoazure-dev ./helm/awstoazure `
+                  --namespace awstoazure-dev `
+                  --create-namespace `
+                  --values ./helm/awstoazure/values-dev.yaml `
+                  --set image.tag=${{ needs.docker.outputs.image-tag }} `
+                  --wait --timeout=300s
+
+            - name: Deploy with Helm (Production)
+              if: github.ref == 'refs/heads/main'
+              shell: powershell
+              run: |
+                & "$env:GITHUB_WORKSPACE\helm.exe" upgrade --install awstoazure-prod ./helm/awstoazure `
+                  --namespace awstoazure-prod `
+                  --create-namespace `
+                  --values ./helm/awstoazure/values-prod.yaml `
+                  --set image.tag=${{ needs.docker.outputs.image-tag }} `
+                  --wait --timeout=600s
+
+            - name: Create Deploy Success Summary
+              if: success()
+              run: |
+                  echo "## 🚀 Deployment Successful! 🎉" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 📊 Deployment Details:" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **ECR Repository**: 891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Image Tag**: latest" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
+                  echo "- [View Deployment Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+                  echo "- [AWS ECR Console](https://us-east-1.console.aws.amazon.com/ecr/repositories/private/891377120087/aws2azurepo)" >> $GITHUB_STEP_SUMMARY
+
+            - name: Create Deploy Failure Summary
+              if: failure()
+              run: |
+                  echo "## 🚨 Deployment Failed! ❌" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 📊 Failure Details:" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Target**: 891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 🔧 Troubleshooting Steps:" >> $GITHUB_STEP_SUMMARY
+                  echo "1. Check AWS credentials and permissions" >> $GITHUB_STEP_SUMMARY
+                  echo "2. Verify ECR repository exists and is accessible" >> $GITHUB_STEP_SUMMARY
+                  echo "3. Check Docker build logs above for errors" >> $GITHUB_STEP_SUMMARY
+                  echo "4. Ensure network connectivity to ECR" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
+                  echo "- [View Failed Deployment](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+                  echo "- [AWS ECR Console](https://us-east-1.console.aws.amazon.com/ecr/repositories)" >> $GITHUB_STEP_SUMMARY
+
+    teardown-infrastructure:
+        runs-on: self-hosted
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.teardown_cluster == 'true'
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Install eksctl
+              shell: powershell
+              run: |
+                  $eksctlUrl = "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Windows_amd64.zip"
+                  Invoke-WebRequest -Uri $eksctlUrl -OutFile "eksctl.zip"
+                  Expand-Archive -Path "eksctl.zip" -DestinationPath "."
+                  Move-Item "eksctl.exe" "$env:GITHUB_WORKSPACE\eksctl.exe"
+                  & "$env:GITHUB_WORKSPACE\eksctl.exe" version
+
+            - name: Confirm cluster teardown
+              shell: powershell
+              run: |
+                  Write-Host "⚠️ WARNING: This will delete the entire EKS cluster!"
+                  Write-Host "Cluster to be deleted: awstoazure-cluster"
+                  Write-Host "Region: us-east-1"
+                  Write-Host ""
+                  Write-Host "This action is irreversible and will:"
+                  Write-Host "- Delete all applications and data in the cluster"
+                  Write-Host "- Remove all worker nodes"
+                  Write-Host "- Delete the control plane"
+                  Write-Host "- Remove associated AWS resources"
+
+            - name: Delete EKS cluster
+              shell: powershell
+              run: |
+                  Write-Host "Deleting EKS cluster..."
+                  & "$env:GITHUB_WORKSPACE\eksctl.exe" delete cluster --name awstoazure-cluster --region us-east-1 --wait
+                  Write-Host "Cluster deletion completed!"
+
+            - name: Create Teardown Summary
+              shell: powershell
+              run: |
+                  $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
+                  echo "## 🗑️ Cluster Teardown Completed! ✅" >> $env:GITHUB_STEP_SUMMARY
+                  echo "" >> $env:GITHUB_STEP_SUMMARY
+                  echo "### 📊 Teardown Details:" >> $env:GITHUB_STEP_SUMMARY
+                  echo "- **Cluster Name**: awstoazure-cluster" >> $env:GITHUB_STEP_SUMMARY
+                  echo "- **Region**: us-east-1" >> $env:GITHUB_STEP_SUMMARY
+                  echo "- **Initiated By**: ${{ github.actor }}" >> $env:GITHUB_STEP_SUMMARY
+                  echo "- **Timestamp**: $timestamp" >> $env:GITHUB_STEP_SUMMARY
+                  echo "" >> $env:GITHUB_STEP_SUMMARY
+                  echo "### ✅ Resources Cleaned Up:" >> $env:GITHUB_STEP_SUMMARY
+                  echo "- EKS control plane deleted" >> $env:GITHUB_STEP_SUMMARY
+                  echo "- Worker nodes terminated" >> $env:GITHUB_STEP_SUMMARY
+                  echo "- Associated security groups removed" >> $env:GITHUB_STEP_SUMMARY
+                  echo "- VPC resources cleaned up" >> $env:GITHUB_STEP_SUMMARY
