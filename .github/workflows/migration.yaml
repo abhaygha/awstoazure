@@ -168,12 +168,36 @@ jobs:
             - name: Install kubectl
               shell: powershell
               run: |
-                # Download and install kubectl for Windows
-                $stableVersion = (Invoke-WebRequest -Uri "https://dl.k8s.io/release/stable.txt").Content.Trim()
-                $kubectlUrl = "https://dl.k8s.io/release/$stableVersion/bin/windows/amd64/kubectl.exe"
-                Invoke-WebRequest -Uri $kubectlUrl -OutFile "kubectl.exe"
-                Move-Item "kubectl.exe" "$env:GITHUB_WORKSPACE\kubectl.exe"
-                & "$env:GITHUB_WORKSPACE\kubectl.exe" version --client
+                # Download and install kubectl for Windows with better error handling
+                try {
+                  $stableVersion = (Invoke-WebRequest -Uri "https://dl.k8s.io/release/stable.txt").Content.Trim()
+                  Write-Host "Latest kubectl version: $stableVersion"
+                  
+                  # Try to detect architecture and download appropriate version
+                  $arch = "amd64"  # Default to amd64
+                  if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") {
+                    $arch = "arm64"
+                  }
+                  
+                  $kubectlUrl = "https://dl.k8s.io/release/$stableVersion/bin/windows/$arch/kubectl.exe"
+                  Write-Host "Downloading kubectl from: $kubectlUrl"
+                  
+                  Invoke-WebRequest -Uri $kubectlUrl -OutFile "kubectl.exe" -UseBasicParsing
+                  Move-Item "kubectl.exe" "$env:GITHUB_WORKSPACE\kubectl.exe"
+                  
+                  # Test kubectl with error handling
+                  Write-Host "Testing kubectl installation..."
+                  $result = & "$env:GITHUB_WORKSPACE\kubectl.exe" version --client 2>&1
+                  if ($LASTEXITCODE -eq 0) {
+                    Write-Host "kubectl installed successfully: $result"
+                  } else {
+                    Write-Error "kubectl test failed: $result"
+                    exit 1
+                  }
+                } catch {
+                  Write-Error "Failed to install kubectl: $_"
+                  exit 1
+                }
 
             - name: Configure AWS CLI for kubectl authentication
               shell: powershell
