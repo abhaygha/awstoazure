@@ -6,6 +6,7 @@ on:
             - master
             - main
             - develop
+            - clean-develop
     pull_request:
         branches:
             - main
