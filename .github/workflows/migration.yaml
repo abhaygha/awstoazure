@@ -374,42 +374,44 @@ jobs:
 
             - name: Create Deploy Success Summary
               if: success()
+              shell: powershell
               run: |
-                  echo "## 🚀 Deployment Successful! 🎉" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 📊 Deployment Details:" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **ECR Repository**: 891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Image Tag**: latest" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
-                  echo "- [View Deployment Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-                  echo "- [AWS ECR Console](https://us-east-1.console.aws.amazon.com/ecr/repositories/private/891377120087/aws2azurepo)" >> $GITHUB_STEP_SUMMARY
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## 🚀 Deployment Successful! 🎉"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 📊 Deployment Details:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Repository**: ${{ github.repository }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Branch**: ${{ github.ref_name }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Commit**: ${{ github.sha }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Author**: ${{ github.actor }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **ECR Repository**: 891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Image Tag**: latest"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 🔗 Links:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [View Deployment Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [AWS ECR Console](https://us-east-1.console.aws.amazon.com/ecr/repositories/private/891377120087/aws2azurepo)"
 
             - name: Create Deploy Failure Summary
               if: failure()
+              shell: powershell
               run: |
-                  echo "## 🚨 Deployment Failed! ❌" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 📊 Failure Details:" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Target**: 891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 🔧 Troubleshooting Steps:" >> $GITHUB_STEP_SUMMARY
-                  echo "1. Check AWS credentials and permissions" >> $GITHUB_STEP_SUMMARY
-                  echo "2. Verify ECR repository exists and is accessible" >> $GITHUB_STEP_SUMMARY
-                  echo "3. Check Docker build logs above for errors" >> $GITHUB_STEP_SUMMARY
-                  echo "4. Ensure network connectivity to ECR" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
-                  echo "- [View Failed Deployment](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-                  echo "- [AWS ECR Console](https://us-east-1.console.aws.amazon.com/ecr/repositories)" >> $GITHUB_STEP_SUMMARY
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## 🚨 Deployment Failed! ❌"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 📊 Failure Details:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Repository**: ${{ github.repository }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Branch**: ${{ github.ref_name }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Commit**: ${{ github.sha }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Author**: ${{ github.actor }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Target**: 891377120087.dkr.ecr.us-east-1.amazonaws.com/aws2azurepo"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 🔧 Troubleshooting Steps:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "1. Check AWS credentials and permissions"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "2. Verify ECR repository exists and is accessible"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "3. Check Docker build logs above for errors"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "4. Ensure network connectivity to ECR"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 🔗 Links:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [View Failed Deployment](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- [AWS ECR Console](https://us-east-1.console.aws.amazon.com/ecr/repositories)"
 
     teardown-infrastructure:
         runs-on: self-hosted
@@ -458,16 +460,16 @@ jobs:
               shell: powershell
               run: |
                   $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
-                  echo "## 🗑️ Cluster Teardown Completed! ✅" >> $env:GITHUB_STEP_SUMMARY
-                  echo "" >> $env:GITHUB_STEP_SUMMARY
-                  echo "### 📊 Teardown Details:" >> $env:GITHUB_STEP_SUMMARY
-                  echo "- **Cluster Name**: awstoazure-cluster" >> $env:GITHUB_STEP_SUMMARY
-                  echo "- **Region**: us-east-1" >> $env:GITHUB_STEP_SUMMARY
-                  echo "- **Initiated By**: ${{ github.actor }}" >> $env:GITHUB_STEP_SUMMARY
-                  echo "- **Timestamp**: $timestamp" >> $env:GITHUB_STEP_SUMMARY
-                  echo "" >> $env:GITHUB_STEP_SUMMARY
-                  echo "### ✅ Resources Cleaned Up:" >> $env:GITHUB_STEP_SUMMARY
-                  echo "- EKS control plane deleted" >> $env:GITHUB_STEP_SUMMARY
-                  echo "- Worker nodes terminated" >> $env:GITHUB_STEP_SUMMARY
-                  echo "- Associated security groups removed" >> $env:GITHUB_STEP_SUMMARY
-                  echo "- VPC resources cleaned up" >> $env:GITHUB_STEP_SUMMARY
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## 🗑️ Cluster Teardown Completed! ✅"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 📊 Teardown Details:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Cluster Name**: awstoazure-cluster"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Region**: us-east-1"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Initiated By**: ${{ github.actor }}"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- **Timestamp**: $timestamp"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### ✅ Resources Cleaned Up:"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- EKS control plane deleted"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Worker nodes terminated"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Associated security groups removed"
+                  Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- VPC resources cleaned up"
